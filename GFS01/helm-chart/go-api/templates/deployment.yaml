@@ -1,0 +1,42 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "go-api.fullname" . }}
+  labels:
+    app: {{ template "go-api.name" . }}
+    chart: {{ template "go-api.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "go-api.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "go-api.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          env:
+            - name: {{ .Values.env.db }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.secret.db }}
+            - name: {{ .Values.env.apikey }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.secret.apikey }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
